@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   SafeAreaView,
   View,
   Text,
@@ -12,6 +13,7 @@ import {
   Platform,
   Alert,
   Modal,
+  Easing,
 } from 'react-native';
 
 interface User {
@@ -38,14 +40,18 @@ type DemoScreen = 'analytics' | 'transactions' | 'budget' | 'settings';
 type AppScreen = 'login' | 'signup' | 'home' | DemoScreen;
 
 interface BudgetCategory {
+  id: 'food' | 'travel' | 'shopping' | 'subscriptions';
   name: string;
   spent: number;
   limit: number;
   color: string;
 }
 
+type TransactionFilter = 'all' | 'incoming' | 'outgoing';
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('login');
+  const screenTransition = useRef(new Animated.Value(1)).current;
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Logout confirmation modal (works seamlessly on iOS/Android and custom Appium automation)
@@ -54,6 +60,14 @@ export default function App() {
   // Notification toggle in settings screen demo
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<'Month' | 'Quarter'>('Month');
+  const [transactionFilter, setTransactionFilter] = useState<TransactionFilter>('all');
+  const [budgetLimits, setBudgetLimits] = useState({
+    food: 1200,
+    travel: 900,
+    shopping: 700,
+    subscriptions: 300,
+  });
 
   // Registered users map (seeded with demo user)
   const [users, setUsers] = useState<Record<string, { name: string; password: string }>>({
@@ -73,6 +87,19 @@ export default function App() {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupError, setSignupError] = useState('');
+
+  useEffect(() => {
+    screenTransition.setValue(0);
+    const animation = Animated.timing(screenTransition, {
+      toValue: 1,
+      duration: 380,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+
+    animation.start();
+    return () => animation.stop();
+  }, [currentScreen, screenTransition]);
 
   // Demo Activities
   const recentActivities: ActivityItem[] = [
@@ -110,11 +137,21 @@ export default function App() {
   ];
 
   const budgetCategories: BudgetCategory[] = [
-    { name: 'Food & Dining', spent: 840, limit: 1200, color: '#f97316' },
-    { name: 'Travel', spent: 560, limit: 900, color: '#0ea5e9' },
-    { name: 'Shopping', spent: 430, limit: 700, color: '#8b5cf6' },
-    { name: 'Subscriptions', spent: 120, limit: 300, color: '#10b981' },
+    { id: 'food', name: 'Food & Dining', spent: 840, limit: budgetLimits.food, color: '#f97316' },
+    { id: 'travel', name: 'Travel', spent: 560, limit: budgetLimits.travel, color: '#0ea5e9' },
+    { id: 'shopping', name: 'Shopping', spent: 430, limit: budgetLimits.shopping, color: '#8b5cf6' },
+    {
+      id: 'subscriptions',
+      name: 'Subscriptions',
+      spent: 120,
+      limit: budgetLimits.subscriptions,
+      color: '#10b981',
+    },
   ];
+
+  const filteredTransactions = recentActivities.filter(
+    (item) => transactionFilter === 'all' || item.type === transactionFilter,
+  );
 
   const handleLogin = () => {
     setLoginError('');
@@ -193,6 +230,22 @@ export default function App() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}
       >
+        <Animated.View
+          style={[
+            styles.screenTransition,
+            {
+              opacity: screenTransition,
+              transform: [
+                {
+                  translateY: screenTransition.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [8, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
         {/* ===================== LOGIN SCREEN ===================== */}
         {currentScreen === 'login' && (
           <ScrollView
@@ -300,13 +353,15 @@ export default function App() {
 
         {/* ===================== SIGNUP SCREEN ===================== */}
         {currentScreen === 'signup' && (
-          <ScrollView
-            contentContainerStyle={styles.authScrollContent}
-            keyboardShouldPersistTaps="handled"
-            accessible={false}
-            testID="signup-screen"
-            accessibilityLabel="signup-screen"
-          >
+          <View style={styles.signupScreenContainer}>
+            <ScrollView
+              style={styles.signupFormScroll}
+              contentContainerStyle={[styles.authScrollContent, styles.signupScrollContent]}
+              keyboardShouldPersistTaps="handled"
+              accessible={false}
+              testID="signup-screen"
+              accessibilityLabel="signup-screen"
+            >
             <View style={styles.authHeader}>
               <View style={styles.appLogoBadge}>
                 <Text style={styles.appLogoText}>A</Text>
@@ -395,16 +450,6 @@ export default function App() {
                 />
               </View>
 
-              <TouchableOpacity
-                style={styles.primaryAuthButton}
-                onPress={handleSignup}
-                testID="signup-submit-button"
-                accessibilityLabel="signup-submit-button"
-                activeOpacity={0.85}
-              >
-                <Text style={styles.primaryAuthButtonText}>Sign Up</Text>
-              </TouchableOpacity>
-
               <View style={styles.authFooterRow}>
                 <Text style={styles.footerPromptText}>Already have an account? </Text>
                 <TouchableOpacity
@@ -419,7 +464,20 @@ export default function App() {
                 </TouchableOpacity>
               </View>
             </View>
-          </ScrollView>
+            </ScrollView>
+            <View style={styles.signupStickyFooter}>
+              <TouchableOpacity
+                style={[styles.primaryAuthButton, styles.signupStickyButton]}
+                onPress={handleSignup}
+                testID="signup-submit-button"
+                accessibilityLabel="signup-submit-button"
+                accessibilityRole="button"
+                activeOpacity={0.85}
+              >
+                <Text style={styles.primaryAuthButtonText}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
 
         {/* ===================== HOME SCREEN ===================== */}
@@ -585,19 +643,32 @@ export default function App() {
                 <Text style={styles.backButtonText}>← Back</Text>
               </TouchableOpacity>
               <Text style={styles.screenHeaderTitle}>Analytics</Text>
-              <View style={{ width: 60 }} />
+              <TouchableOpacity
+                style={styles.periodSelector}
+                onPress={() => setAnalyticsPeriod(analyticsPeriod === 'Month' ? 'Quarter' : 'Month')}
+                testID="analytics-period-toggle"
+                accessibilityLabel="analytics-period-toggle"
+              >
+                <Text style={styles.periodSelectorText} testID="analytics-period-value">
+                  {analyticsPeriod}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             {/* Metrics cards */}
             <View style={styles.metricsRow}>
               <View style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Total Spent</Text>
-                <Text style={styles.metricValue}>$4,320</Text>
+                <Text style={styles.metricValue} testID="analytics-spending-total">
+                  {analyticsPeriod === 'Month' ? '$4,320' : '$12,400'}
+                </Text>
                 <Text style={styles.metricChangeNegative}>+8.2% vs last mo</Text>
               </View>
               <View style={styles.metricCard}>
                 <Text style={styles.metricLabel}>Total Earned</Text>
-                <Text style={styles.metricValue}>$9,850</Text>
+                <Text style={styles.metricValue}>
+                  {analyticsPeriod === 'Month' ? '$9,850' : '$27,600'}
+                </Text>
                 <Text style={styles.metricChangePositive}>+15.4% vs last mo</Text>
               </View>
             </View>
@@ -667,12 +738,45 @@ export default function App() {
             <View style={styles.transactionSummaryCard}>
               <Text style={styles.transactionSummaryLabel}>This month</Text>
               <Text style={styles.transactionSummaryAmount}>$1,110.01</Text>
-              <Text style={styles.transactionSummaryCaption}>3 recent transactions</Text>
+              <Text style={styles.transactionSummaryCaption} testID="transaction-count">
+                {filteredTransactions.length} recent transaction
+                {filteredTransactions.length === 1 ? '' : 's'}
+              </Text>
+            </View>
+
+            <View style={styles.transactionFilters}>
+              {([
+                ['all', 'All'],
+                ['incoming', 'Income'],
+                ['outgoing', 'Expenses'],
+              ] as const).map(([filter, label]) => (
+                <TouchableOpacity
+                  key={filter}
+                  style={[
+                    styles.transactionFilter,
+                    transactionFilter === filter && styles.transactionFilterActive,
+                  ]}
+                  onPress={() => setTransactionFilter(filter)}
+                  testID={`transaction-filter-${filter}`}
+                  accessibilityLabel={`transaction-filter-${filter}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: transactionFilter === filter }}
+                >
+                  <Text
+                    style={[
+                      styles.transactionFilterText,
+                      transactionFilter === filter && styles.transactionFilterTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             <Text style={styles.sectionHeading}>Recent activity</Text>
             <View style={styles.activityListCard}>
-              {recentActivities.map((item, index) => (
+              {filteredTransactions.map((item, index) => (
                 <View key={item.id}>
                   <View style={styles.activityItemRow}>
                     <View style={styles.activityIconCircle}>
@@ -681,7 +785,9 @@ export default function App() {
                       </Text>
                     </View>
                     <View style={styles.activityDetails}>
-                      <Text style={styles.activityTitle}>{item.title}</Text>
+                      <Text style={styles.activityTitle} testID={`transaction-title-${item.id}`}>
+                        {item.title}
+                      </Text>
                       <Text style={styles.activitySubtitle}>{item.category} • {item.time}</Text>
                     </View>
                     <Text
@@ -738,10 +844,44 @@ export default function App() {
                 <View key={category.name} style={styles.budgetCategoryCard}>
                   <View style={styles.budgetCategoryHeader}>
                     <Text style={styles.budgetCategoryName}>{category.name}</Text>
-                    <Text style={styles.budgetCategoryAmount}>
-                      ${category.spent} / ${category.limit}
-                    </Text>
+                    <View style={styles.budgetAdjustControls}>
+                      <Text style={styles.budgetCategoryAmount}>Limit</Text>
+                      <TouchableOpacity
+                        style={styles.budgetAdjustButton}
+                        onPress={() =>
+                          setBudgetLimits((previous) => ({
+                            ...previous,
+                            [category.id]: Math.max(category.spent + 100, previous[category.id] - 100),
+                          }))
+                        }
+                        testID={`budget-decrease-${category.id}`}
+                        accessibilityLabel={`budget-decrease-${category.id}`}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.budgetAdjustButtonText}>−</Text>
+                      </TouchableOpacity>
+                      <Text style={styles.budgetLimitValue} testID={`budget-limit-${category.id}`}>
+                        ${category.limit.toLocaleString('en-US')}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.budgetAdjustButton}
+                        onPress={() =>
+                          setBudgetLimits((previous) => ({
+                            ...previous,
+                            [category.id]: previous[category.id] + 100,
+                          }))
+                        }
+                        testID={`budget-increase-${category.id}`}
+                        accessibilityLabel={`budget-increase-${category.id}`}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.budgetAdjustButtonText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
+                  <Text style={styles.budgetSpentText}>
+                    ${category.spent.toLocaleString('en-US')} spent
+                  </Text>
                   <View style={styles.budgetTrack}>
                     <View
                       style={[
@@ -795,9 +935,12 @@ export default function App() {
               <TouchableOpacity
                 style={styles.settingsRow}
                 onPress={() => setNotificationsEnabled(!notificationsEnabled)}
+                testID="settings-notifications-toggle"
+                accessibilityLabel="settings-notifications-toggle"
+                accessibilityRole="button"
               >
                 <Text style={styles.settingsRowLabel}>Push Notifications</Text>
-                <Text style={styles.settingsRowValue}>
+                <Text style={styles.settingsRowValue} testID="settings-notifications-value">
                   {notificationsEnabled ? 'Enabled  ✓' : 'Disabled  ✕'}
                 </Text>
               </TouchableOpacity>
@@ -807,9 +950,12 @@ export default function App() {
               <TouchableOpacity
                 style={styles.settingsRow}
                 onPress={() => setDarkModeEnabled(!darkModeEnabled)}
+                testID="settings-appearance-toggle"
+                accessibilityLabel="settings-appearance-toggle"
+                accessibilityRole="button"
               >
                 <Text style={styles.settingsRowLabel}>Appearance</Text>
-                <Text style={styles.settingsRowValue}>
+                <Text style={styles.settingsRowValue} testID="settings-appearance-value">
                   {darkModeEnabled ? 'Dark Theme' : 'Light Theme'}
                 </Text>
               </TouchableOpacity>
@@ -856,6 +1002,7 @@ export default function App() {
             </TouchableOpacity>
           </ScrollView>
         )}
+        </Animated.View>
 
         {/* ===================== LOGOUT CONFIRMATION MODAL / ALERT ===================== */}
         <Modal
@@ -919,6 +1066,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8fafc',
   },
+  screenTransition: {
+    flex: 1,
+  },
 
   // Auth Layout
   authScrollContent: {
@@ -926,6 +1076,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
     backgroundColor: '#f8fafc',
+  },
+  signupScreenContainer: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  signupFormScroll: {
+    flex: 1,
+  },
+  signupScrollContent: {
+    justifyContent: 'flex-start',
+    paddingBottom: 20,
+  },
+  signupStickyFooter: {
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: '#f8fafc',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+  },
+  signupStickyButton: {
+    marginTop: 0,
   },
   authHeader: {
     alignItems: 'center',
@@ -1352,6 +1524,19 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0f172a',
   },
+  periodSelector: {
+    minWidth: 64,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    alignItems: 'center',
+    backgroundColor: '#eef2ff',
+    borderRadius: 12,
+  },
+  periodSelectorText: {
+    color: '#4338ca',
+    fontSize: 13,
+    fontWeight: '700',
+  },
   metricsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1486,6 +1671,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
+  transactionFilters: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    gap: 8,
+  },
+  transactionFilter: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 18,
+  },
+  transactionFilterActive: {
+    backgroundColor: '#312e81',
+    borderColor: '#312e81',
+  },
+  transactionFilterText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  transactionFilterTextActive: {
+    color: '#ffffff',
+  },
   budgetSummaryCard: {
     backgroundColor: '#312e81',
     borderRadius: 20,
@@ -1543,6 +1753,35 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 12,
     fontWeight: '600',
+  },
+  budgetAdjustControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  budgetAdjustButton: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eef2ff',
+    borderRadius: 15,
+  },
+  budgetAdjustButtonText: {
+    color: '#4338ca',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  budgetLimitValue: {
+    minWidth: 58,
+    color: '#0f172a',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  budgetSpentText: {
+    color: '#64748b',
+    fontSize: 12,
+    marginBottom: 10,
   },
 
   // Settings Screen

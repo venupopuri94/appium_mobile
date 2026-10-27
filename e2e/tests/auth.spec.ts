@@ -49,12 +49,40 @@ describe('Mobile Authentication & App Flow', () => {
 
     // Exercise the dashboard once.
     await HomePage.openAnalytics();
+    expect(await HomePage.getElementText(HomePage.analyticsPeriodValue)).toEqual('Month');
+    expect(await HomePage.getElementText(HomePage.analyticsSpendingTotal)).toEqual('$4,320');
+    await HomePage.analyticsPeriodToggle.click();
+    expect(await HomePage.getElementText(HomePage.analyticsPeriodValue)).toEqual('Quarter');
+    expect(await HomePage.getElementText(HomePage.analyticsSpendingTotal)).toEqual('$12,400');
     await HomePage.returnToHomeFromAnalytics();
+
     await HomePage.openTransactions();
+    expect(await HomePage.getElementText(HomePage.transactionCount)).toEqual('3 recent transactions');
+    await HomePage.incomeTransactionsFilter.click();
+    expect(await HomePage.getElementText(HomePage.transactionCount)).toEqual('1 recent transaction');
+    await HomePage.expenseTransactionsFilter.click();
+    expect(await HomePage.getElementText(HomePage.transactionCount)).toEqual('2 recent transactions');
+    await HomePage.allTransactionsFilter.click();
+    expect(await HomePage.getElementText(HomePage.transactionCount)).toEqual('3 recent transactions');
     await HomePage.returnToHomeFromTransactions();
+
     await HomePage.openBudget();
+    expect(await HomePage.getElementText(HomePage.foodBudgetLimit)).toEqual('$1,200');
+    await HomePage.increaseFoodBudgetButton.click();
+    expect(await HomePage.getElementText(HomePage.foodBudgetLimit)).toEqual('$1,300');
+    await HomePage.decreaseFoodBudgetButton.click();
+    expect(await HomePage.getElementText(HomePage.foodBudgetLimit)).toEqual('$1,200');
     await HomePage.returnToHomeFromBudget();
+
     await HomePage.openSettings();
+    expect(await HomePage.getElementText(HomePage.notificationsValue)).toContain('Enabled');
+    await HomePage.notificationsToggle.click();
+    expect(await HomePage.getElementText(HomePage.notificationsValue)).toContain('Disabled');
+    await HomePage.notificationsToggle.click();
+    expect(await HomePage.getElementText(HomePage.notificationsValue)).toContain('Enabled');
+    expect(await HomePage.getElementText(HomePage.appearanceValue)).toEqual('Light Theme');
+    await HomePage.appearanceToggle.click();
+    expect(await HomePage.getElementText(HomePage.appearanceValue)).toEqual('Dark Theme');
     await HomePage.returnToHomeFromSettings();
 
     // Confirm sign out once and return to Login.

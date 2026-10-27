@@ -59,6 +59,18 @@ class HomePage extends BasePage {
     return this.byAccessibilityId('analytics-screen');
   }
 
+  get analyticsPeriodToggle() {
+    return this.byAccessibilityId('analytics-period-toggle');
+  }
+
+  get analyticsPeriodValue() {
+    return this.byAccessibilityId('analytics-period-value');
+  }
+
+  get analyticsSpendingTotal() {
+    return this.byAccessibilityId('analytics-spending-total');
+  }
+
   get settingsScreen() {
     return this.byAccessibilityId('settings-screen');
   }
@@ -75,6 +87,22 @@ class HomePage extends BasePage {
     return this.byAccessibilityId('transactions-back-btn');
   }
 
+  get allTransactionsFilter() {
+    return this.byAccessibilityId('transaction-filter-all');
+  }
+
+  get incomeTransactionsFilter() {
+    return this.byAccessibilityId('transaction-filter-incoming');
+  }
+
+  get expenseTransactionsFilter() {
+    return this.byAccessibilityId('transaction-filter-outgoing');
+  }
+
+  get transactionCount() {
+    return this.byAccessibilityId('transaction-count');
+  }
+
   get budgetActionButton() {
     return this.byAccessibilityId('action-budget-button');
   }
@@ -85,6 +113,34 @@ class HomePage extends BasePage {
 
   get budgetBackButton() {
     return this.byAccessibilityId('budget-back-btn');
+  }
+
+  get increaseFoodBudgetButton() {
+    return this.byAccessibilityId('budget-increase-food');
+  }
+
+  get decreaseFoodBudgetButton() {
+    return this.byAccessibilityId('budget-decrease-food');
+  }
+
+  get foodBudgetLimit() {
+    return this.byAccessibilityId('budget-limit-food');
+  }
+
+  get notificationsToggle() {
+    return this.byAccessibilityId('settings-notifications-toggle');
+  }
+
+  get notificationsValue() {
+    return this.byAccessibilityId('settings-notifications-value');
+  }
+
+  get appearanceToggle() {
+    return this.byAccessibilityId('settings-appearance-toggle');
+  }
+
+  get appearanceValue() {
+    return this.byAccessibilityId('settings-appearance-value');
   }
 
   async logout(confirm = true) {
