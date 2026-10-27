@@ -1,15 +1,13 @@
-const path = require('path');
+import path from 'node:path';
 
-exports.config = {
+export const config: WebdriverIO.Config = {
   runner: 'local',
   port: 4723,
-  specs: [
-    path.join(__dirname, '../tests/**/*.spec.js')
-  ],
+  capabilities: [],
+  specs: [path.join(__dirname, '../tests/**/*.spec.ts')],
   exclude: [],
   maxInstances: 1,
   logLevel: 'info',
-  bail: 0,
   waitforTimeout: 20000,
   connectionRetryTimeout: 120000,
   connectionRetryCount: 3,
@@ -18,6 +16,6 @@ exports.config = {
   reporters: ['spec'],
   mochaOpts: {
     ui: 'bdd',
-    timeout: 300000
-  }
+    timeout: 300000,
+  },
 };

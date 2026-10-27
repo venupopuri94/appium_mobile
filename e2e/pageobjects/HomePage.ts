@@ -1,4 +1,4 @@
-const BasePage = require('./BasePage');
+import BasePage from './BasePage';
 
 class HomePage extends BasePage {
   get screen() {
@@ -63,6 +63,30 @@ class HomePage extends BasePage {
     return this.byAccessibilityId('settings-screen');
   }
 
+  get transactionsActionButton() {
+    return this.byAccessibilityId('action-transactions-button');
+  }
+
+  get transactionsScreen() {
+    return this.byAccessibilityId('transactions-screen');
+  }
+
+  get transactionsBackButton() {
+    return this.byAccessibilityId('transactions-back-btn');
+  }
+
+  get budgetActionButton() {
+    return this.byAccessibilityId('action-budget-button');
+  }
+
+  get budgetScreen() {
+    return this.byAccessibilityId('budget-screen');
+  }
+
+  get budgetBackButton() {
+    return this.byAccessibilityId('budget-back-btn');
+  }
+
   async logout(confirm = true) {
     await this.waitForDisplayed(this.logoutButton);
     await this.logoutButton.click();
@@ -101,6 +125,30 @@ class HomePage extends BasePage {
     await this.settingsBackButton.click();
     await this.waitForDisplayed(this.welcomeTitle);
   }
+
+  async openTransactions(): Promise<void> {
+    await this.waitForDisplayed(this.transactionsActionButton);
+    await this.transactionsActionButton.click();
+    await this.waitForDisplayed(this.transactionsScreen);
+  }
+
+  async returnToHomeFromTransactions(): Promise<void> {
+    await this.waitForDisplayed(this.transactionsBackButton);
+    await this.transactionsBackButton.click();
+    await this.waitForDisplayed(this.welcomeTitle);
+  }
+
+  async openBudget(): Promise<void> {
+    await this.waitForDisplayed(this.budgetActionButton);
+    await this.budgetActionButton.click();
+    await this.waitForDisplayed(this.budgetScreen);
+  }
+
+  async returnToHomeFromBudget(): Promise<void> {
+    await this.waitForDisplayed(this.budgetBackButton);
+    await this.budgetBackButton.click();
+    await this.waitForDisplayed(this.welcomeTitle);
+  }
 }
 
-module.exports = new HomePage();
+export default new HomePage();

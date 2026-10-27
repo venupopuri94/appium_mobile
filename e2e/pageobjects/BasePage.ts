@@ -1,12 +1,14 @@
-class BasePage {
+export type AppiumElement = ReturnType<typeof $>;
+
+export default class BasePage {
   /**
    * Helper selector for cross-platform accessibility IDs / testIDs
    */
-  byAccessibilityId(id) {
+  byAccessibilityId(id: string): AppiumElement {
     return $(`~${id}`);
   }
 
-  async waitForDisplayed(element, timeout = 10000) {
+  async waitForDisplayed(element: AppiumElement, timeout = 10000): Promise<void> {
     await element.waitForDisplayed({ timeout });
   }
 
@@ -48,7 +50,7 @@ class BasePage {
   /**
    * Type text into an input field safely across iOS and Android
    */
-  async typeInput(element, text) {
+  async typeInput(element: AppiumElement, text: string): Promise<void> {
     await this.waitForDisplayed(element);
     await element.click();
     await element.clearValue();
@@ -64,7 +66,7 @@ class BasePage {
    * Prefer the element's displayed text. Appium can expose an accessibility
    * identifier through value/label when React Native text has a custom label.
    */
-  async getElementText(element) {
+  async getElementText(element: AppiumElement): Promise<string> {
     const text = await element.getText();
     if (text !== null && text !== undefined && text !== '') {
       return text;
@@ -80,8 +82,6 @@ class BasePage {
         return label;
       }
     }
-    return text;
+    return text ?? '';
   }
 }
-
-module.exports = BasePage;

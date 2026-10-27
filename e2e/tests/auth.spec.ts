@@ -1,6 +1,6 @@
-const LoginPage = require('../pageobjects/LoginPage');
-const SignupPage = require('../pageobjects/SignupPage');
-const HomePage = require('../pageobjects/HomePage');
+import LoginPage from '../pageobjects/LoginPage';
+import SignupPage from '../pageobjects/SignupPage';
+import HomePage from '../pageobjects/HomePage';
 
 describe('Mobile Authentication & App Flow', () => {
   it('completes signup, login, dashboard, and logout once for one new user', async () => {
@@ -21,7 +21,7 @@ describe('Mobile Authentication & App Flow', () => {
       'Please fill in all fields.',
     );
 
-    await SignupPage.signup('Saketh Duplicate', 'saketh.aryan@test.com', 'Test@123');
+    await SignupPage.signup('Saketh Aryan', 'saketh.aryan@test.com', 'Test@123');
     await SignupPage.waitForDisplayed(SignupPage.errorMessage, 5000);
     expect(await SignupPage.getElementText(SignupPage.errorMessage)).toContain(
       'An account with this email already exists.',
@@ -50,6 +50,10 @@ describe('Mobile Authentication & App Flow', () => {
     // Exercise the dashboard once.
     await HomePage.openAnalytics();
     await HomePage.returnToHomeFromAnalytics();
+    await HomePage.openTransactions();
+    await HomePage.returnToHomeFromTransactions();
+    await HomePage.openBudget();
+    await HomePage.returnToHomeFromBudget();
     await HomePage.openSettings();
     await HomePage.returnToHomeFromSettings();
 

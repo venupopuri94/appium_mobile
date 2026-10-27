@@ -1,4 +1,4 @@
-const BasePage = require('./BasePage');
+import BasePage from './BasePage';
 
 class LoginPage extends BasePage {
   get title() {
@@ -25,17 +25,17 @@ class LoginPage extends BasePage {
     return this.byAccessibilityId('login-error-text');
   }
 
-  async login(email, password) {
+  async login(email: string, password: string): Promise<void> {
     await this.typeInput(this.emailInput, email);
     await this.typeInput(this.passwordInput, password);
     await this.waitForDisplayed(this.loginButton);
     await this.loginButton.click();
   }
 
-  async navigateToSignup() {
+  async navigateToSignup(): Promise<void> {
     await this.waitForDisplayed(this.goToSignupButton);
     await this.goToSignupButton.click();
   }
 }
 
-module.exports = new LoginPage();
+export default new LoginPage();

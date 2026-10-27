@@ -29,13 +29,23 @@ interface ActivityItem {
 }
 
 interface QuickAction {
-  id: string;
+  id: DemoScreen;
   label: string;
   iconText: string;
 }
 
+type DemoScreen = 'analytics' | 'transactions' | 'budget' | 'settings';
+type AppScreen = 'login' | 'signup' | 'home' | DemoScreen;
+
+interface BudgetCategory {
+  name: string;
+  spent: number;
+  limit: number;
+  color: string;
+}
+
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<'login' | 'signup' | 'home' | 'analytics' | 'settings'>('login');
+  const [currentScreen, setCurrentScreen] = useState<AppScreen>('login');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Logout confirmation modal (works seamlessly on iOS/Android and custom Appium automation)
@@ -93,10 +103,17 @@ export default function App() {
   ];
 
   const quickActions: QuickAction[] = [
-    { id: '1', label: 'Analytics', iconText: '📊' },
-    { id: '2', label: 'Settings', iconText: '⚙️' },
-    { id: '3', label: 'Transfer', iconText: '💳' },
-    { id: '4', label: 'Support', iconText: '💬' },
+    { id: 'analytics', label: 'Analytics', iconText: '📊' },
+    { id: 'transactions', label: 'Transactions', iconText: '🧾' },
+    { id: 'budget', label: 'Budget', iconText: '🎯' },
+    { id: 'settings', label: 'Settings', iconText: '⚙️' },
+  ];
+
+  const budgetCategories: BudgetCategory[] = [
+    { name: 'Food & Dining', spent: 840, limit: 1200, color: '#f97316' },
+    { name: 'Travel', spent: 560, limit: 900, color: '#0ea5e9' },
+    { name: 'Shopping', spent: 430, limit: 700, color: '#8b5cf6' },
+    { name: 'Subscriptions', spent: 120, limit: 300, color: '#10b981' },
   ];
 
   const handleLogin = () => {
@@ -187,16 +204,16 @@ export default function App() {
           >
             <View style={styles.authHeader}>
               <View style={styles.appLogoBadge}>
-                <Text style={styles.appLogoText}>✦</Text>
+                <Text style={styles.appLogoText}>A</Text>
               </View>
               <Text
                 style={styles.mainTitle}
                 testID="login-title"
                 accessibilityLabel="login-title"
               >
-                Welcome Back
+                Welcome to Artha
               </Text>
-              <Text style={styles.mainSubtitle}>Sign in to access your dashboard</Text>
+              <Text style={styles.mainSubtitle}>Your money, clearly in view.</Text>
             </View>
 
             <View style={styles.authCard}>
@@ -223,7 +240,10 @@ export default function App() {
                   placeholder="name@example.com"
                   placeholderTextColor="#94a3b8"
                   value={loginEmail}
-                  onChangeText={setLoginEmail}
+                  onChangeText={(value) => {
+                    setLoginEmail(value);
+                    if (loginError) setLoginError('');
+                  }}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   testID="login-email-input"
@@ -239,7 +259,10 @@ export default function App() {
                   placeholder="••••••••"
                   placeholderTextColor="#94a3b8"
                   value={loginPassword}
-                  onChangeText={setLoginPassword}
+                  onChangeText={(value) => {
+                    setLoginPassword(value);
+                    if (loginError) setLoginError('');
+                  }}
                   secureTextEntry
                   textContentType="oneTimeCode"
                   autoComplete="off"
@@ -286,7 +309,7 @@ export default function App() {
           >
             <View style={styles.authHeader}>
               <View style={styles.appLogoBadge}>
-                <Text style={styles.appLogoText}>✦</Text>
+                <Text style={styles.appLogoText}>A</Text>
               </View>
               <Text
                 style={styles.mainTitle}
@@ -322,7 +345,10 @@ export default function App() {
                   placeholder="e.g. John Doe"
                   placeholderTextColor="#94a3b8"
                   value={signupName}
-                  onChangeText={setSignupName}
+                  onChangeText={(value) => {
+                    setSignupName(value);
+                    if (signupError) setSignupError('');
+                  }}
                   autoCorrect={false}
                   autoCapitalize="words"
                   testID="signup-name-input"
@@ -338,7 +364,10 @@ export default function App() {
                   placeholder="name@example.com"
                   placeholderTextColor="#94a3b8"
                   value={signupEmail}
-                  onChangeText={setSignupEmail}
+                  onChangeText={(value) => {
+                    setSignupEmail(value);
+                    if (signupError) setSignupError('');
+                  }}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   testID="signup-email-input"
@@ -354,7 +383,10 @@ export default function App() {
                   placeholder="••••••••"
                   placeholderTextColor="#94a3b8"
                   value={signupPassword}
-                  onChangeText={setSignupPassword}
+                  onChangeText={(value) => {
+                    setSignupPassword(value);
+                    if (signupError) setSignupError('');
+                  }}
                   secureTextEntry
                   textContentType="oneTimeCode"
                   autoComplete="off"
@@ -481,59 +513,26 @@ export default function App() {
             {/* Quick Actions Grid */}
             <Text style={styles.sectionHeading}>Quick Actions</Text>
             <View style={styles.quickActionsGrid}>
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => setCurrentScreen('analytics')}
-                testID="action-analytics-button"
-                accessibilityLabel="action-analytics-button"
-              >
-                <View style={styles.quickActionIconWrap}>
-                  <Text style={styles.quickActionIcon}>📊</Text>
-                </View>
-                <Text style={styles.quickActionLabel}>Analytics</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => setCurrentScreen('settings')}
-                testID="action-settings-button"
-                accessibilityLabel="action-settings-button"
-              >
-                <View style={styles.quickActionIconWrap}>
-                  <Text style={styles.quickActionIcon}>⚙️</Text>
-                </View>
-                <Text style={styles.quickActionLabel}>Settings</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => Alert.alert('Transfer Service', 'Ready to send instant money.')}
-                testID="action-transfer-button"
-                accessibilityLabel="action-transfer-button"
-              >
-                <View style={styles.quickActionIconWrap}>
-                  <Text style={styles.quickActionIcon}>💳</Text>
-                </View>
-                <Text style={styles.quickActionLabel}>Transfer</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.quickActionCard}
-                onPress={() => Alert.alert('Support 24/7', 'Connecting to real-time chat support.')}
-                testID="action-support-button"
-                accessibilityLabel="action-support-button"
-              >
-                <View style={styles.quickActionIconWrap}>
-                  <Text style={styles.quickActionIcon}>💬</Text>
-                </View>
-                <Text style={styles.quickActionLabel}>Support</Text>
-              </TouchableOpacity>
+              {quickActions.map((action) => (
+                <TouchableOpacity
+                  key={action.id}
+                  style={styles.quickActionCard}
+                  onPress={() => setCurrentScreen(action.id)}
+                  testID={`action-${action.id}-button`}
+                  accessibilityLabel={`action-${action.id}-button`}
+                >
+                  <View style={styles.quickActionIconWrap}>
+                    <Text style={styles.quickActionIcon}>{action.iconText}</Text>
+                  </View>
+                  <Text style={styles.quickActionLabel}>{action.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {/* Recent Activity List */}
             <View style={styles.activitySectionHeader}>
               <Text style={styles.sectionHeading}>Recent Transactions</Text>
-              <TouchableOpacity onPress={() => setCurrentScreen('analytics')}>
+              <TouchableOpacity onPress={() => setCurrentScreen('transactions')}>
                 <Text style={styles.seeAllText}>View All</Text>
               </TouchableOpacity>
             </View>
@@ -644,7 +643,120 @@ export default function App() {
           </ScrollView>
         )}
 
-        {/* ===================== DEMO SCREEN 2: SETTINGS & PROFILE ===================== */}
+        {/* ===================== DEMO SCREEN 2: TRANSACTIONS ===================== */}
+        {currentScreen === 'transactions' && (
+          <ScrollView
+            contentContainerStyle={styles.demoScrollContent}
+            accessible={false}
+            testID="transactions-screen"
+            accessibilityLabel="transactions-screen"
+          >
+            <View style={styles.navBackHeader}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setCurrentScreen('home')}
+                testID="transactions-back-btn"
+                accessibilityLabel="transactions-back-btn"
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+              <Text style={styles.screenHeaderTitle}>Transactions</Text>
+              <View style={{ width: 60 }} />
+            </View>
+
+            <View style={styles.transactionSummaryCard}>
+              <Text style={styles.transactionSummaryLabel}>This month</Text>
+              <Text style={styles.transactionSummaryAmount}>$1,110.01</Text>
+              <Text style={styles.transactionSummaryCaption}>3 recent transactions</Text>
+            </View>
+
+            <Text style={styles.sectionHeading}>Recent activity</Text>
+            <View style={styles.activityListCard}>
+              {recentActivities.map((item, index) => (
+                <View key={item.id}>
+                  <View style={styles.activityItemRow}>
+                    <View style={styles.activityIconCircle}>
+                      <Text style={styles.activityIconEmoji}>
+                        {item.type === 'incoming' ? '↙' : '↗'}
+                      </Text>
+                    </View>
+                    <View style={styles.activityDetails}>
+                      <Text style={styles.activityTitle}>{item.title}</Text>
+                      <Text style={styles.activitySubtitle}>{item.category} • {item.time}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.activityAmount,
+                        item.type === 'incoming' ? styles.incomeAmount : styles.expenseAmount,
+                      ]}
+                    >
+                      {item.amount}
+                    </Text>
+                  </View>
+                  {index < recentActivities.length - 1 && <View style={styles.itemDivider} />}
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        )}
+
+        {/* ===================== DEMO SCREEN 3: BUDGET ===================== */}
+        {currentScreen === 'budget' && (
+          <ScrollView
+            contentContainerStyle={styles.demoScrollContent}
+            accessible={false}
+            testID="budget-screen"
+            accessibilityLabel="budget-screen"
+          >
+            <View style={styles.navBackHeader}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setCurrentScreen('home')}
+                testID="budget-back-btn"
+                accessibilityLabel="budget-back-btn"
+              >
+                <Text style={styles.backButtonText}>← Back</Text>
+              </TouchableOpacity>
+              <Text style={styles.screenHeaderTitle}>Monthly Budget</Text>
+              <View style={{ width: 60 }} />
+            </View>
+
+            <View style={styles.budgetSummaryCard}>
+              <Text style={styles.budgetSummaryLabel}>Available to spend</Text>
+              <Text style={styles.budgetSummaryAmount}>$1,170</Text>
+              <Text style={styles.budgetSummaryCaption}>of $4,270 monthly budget</Text>
+              <View style={styles.budgetTrack}>
+                <View style={[styles.budgetFill, { width: '73%' }]} />
+              </View>
+              <Text style={styles.budgetSummaryCaption}>73% used · 12 days left</Text>
+            </View>
+
+            <Text style={styles.sectionHeading}>Spending limits</Text>
+            {budgetCategories.map((category) => {
+              const percent = Math.min((category.spent / category.limit) * 100, 100);
+              return (
+                <View key={category.name} style={styles.budgetCategoryCard}>
+                  <View style={styles.budgetCategoryHeader}>
+                    <Text style={styles.budgetCategoryName}>{category.name}</Text>
+                    <Text style={styles.budgetCategoryAmount}>
+                      ${category.spent} / ${category.limit}
+                    </Text>
+                  </View>
+                  <View style={styles.budgetTrack}>
+                    <View
+                      style={[
+                        styles.budgetFill,
+                        { width: `${percent}%`, backgroundColor: category.color },
+                      ]}
+                    />
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {/* ===================== DEMO SCREEN 4: SETTINGS & PROFILE ===================== */}
         {currentScreen === 'settings' && (
           <ScrollView
             contentContainerStyle={styles.demoScrollContent}
@@ -1350,6 +1462,87 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#0f172a',
+  },
+
+  transactionSummaryCard: {
+    backgroundColor: '#312e81',
+    borderRadius: 20,
+    padding: 22,
+    marginBottom: 22,
+  },
+  transactionSummaryLabel: {
+    color: '#c7d2fe',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  transactionSummaryAmount: {
+    color: '#ffffff',
+    fontSize: 30,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  transactionSummaryCaption: {
+    color: '#c7d2fe',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  budgetSummaryCard: {
+    backgroundColor: '#312e81',
+    borderRadius: 20,
+    padding: 22,
+    marginBottom: 22,
+  },
+  budgetSummaryLabel: {
+    color: '#c7d2fe',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  budgetSummaryAmount: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '800',
+    marginTop: 8,
+  },
+  budgetSummaryCaption: {
+    color: '#c7d2fe',
+    fontSize: 12,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  budgetTrack: {
+    height: 9,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  budgetFill: {
+    height: '100%',
+    backgroundColor: '#a5b4fc',
+    borderRadius: 8,
+  },
+  budgetCategoryCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  budgetCategoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  budgetCategoryName: {
+    color: '#0f172a',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  budgetCategoryAmount: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   // Settings Screen

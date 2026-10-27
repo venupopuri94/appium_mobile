@@ -1,17 +1,18 @@
-const path = require('path');
-const fs = require('fs');
-const { config } = require('./wdio.shared.conf');
+import fs from 'node:fs';
+import path from 'node:path';
+import { config } from './wdio.shared.conf';
 
-function getIosAppPath() {
+function getIosAppPath(): string {
   if (process.env.IOS_APP_PATH) {
     return process.env.IOS_APP_PATH;
   }
+
   const localBuild = path.join(__dirname, '../../ios/build/Build/Products/Debug-iphonesimulator/AuthApp.app');
   const appCandidates = [localBuild];
   const derivedDataDir = path.join(process.env.HOME || '', 'Library/Developer/Xcode/DerivedData');
+
   if (fs.existsSync(derivedDataDir)) {
-    const entries = fs.readdirSync(derivedDataDir);
-    for (const entry of entries) {
+    for (const entry of fs.readdirSync(derivedDataDir)) {
       if (entry.startsWith('AuthApp-')) {
         appCandidates.push(
           path.join(derivedDataDir, entry, 'Build/Products/Debug-iphonesimulator/AuthApp.app'),
@@ -32,7 +33,7 @@ function getIosAppPath() {
   return existingApps[0] || localBuild;
 }
 
-const iosCapability = {
+const iosCapability: Record<string, string | number | boolean> = {
   platformName: 'iOS',
   'appium:automationName': 'XCUITest',
   'appium:deviceName': process.env.IOS_DEVICE_NAME || 'iPhone 18 Pro',
@@ -44,10 +45,9 @@ const iosCapability = {
 };
 
 const appPath = getIosAppPath();
-if (appPath && fs.existsSync(appPath)) {
+if (fs.existsSync(appPath)) {
   iosCapability['appium:app'] = appPath;
 }
 
-config.capabilities = [iosCapability];
-
-exports.config = config;
+config.capabilities = [iosCapability as WebdriverIO.Capabilities];
+export { config };
