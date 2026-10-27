@@ -7,22 +7,29 @@ function getIosAppPath() {
     return process.env.IOS_APP_PATH;
   }
   const localBuild = path.join(__dirname, '../../ios/build/Build/Products/Debug-iphonesimulator/AuthApp.app');
-  if (fs.existsSync(localBuild)) {
-    return localBuild;
-  }
+  const appCandidates = [localBuild];
   const derivedDataDir = path.join(process.env.HOME || '', 'Library/Developer/Xcode/DerivedData');
   if (fs.existsSync(derivedDataDir)) {
     const entries = fs.readdirSync(derivedDataDir);
     for (const entry of entries) {
       if (entry.startsWith('AuthApp-')) {
-        const candidate = path.join(derivedDataDir, entry, 'Build/Products/Debug-iphonesimulator/AuthApp.app');
-        if (fs.existsSync(candidate)) {
-          return candidate;
-        }
+        appCandidates.push(
+          path.join(derivedDataDir, entry, 'Build/Products/Debug-iphonesimulator/AuthApp.app'),
+        );
       }
     }
   }
-  return localBuild;
+
+  const existingApps = appCandidates.filter((candidate) => fs.existsSync(candidate));
+  existingApps.sort((left, right) => {
+    const leftExecutable = path.join(left, 'AuthApp');
+    const rightExecutable = path.join(right, 'AuthApp');
+    const leftModified = fs.existsSync(leftExecutable) ? fs.statSync(leftExecutable).mtimeMs : 0;
+    const rightModified = fs.existsSync(rightExecutable) ? fs.statSync(rightExecutable).mtimeMs : 0;
+    return rightModified - leftModified;
+  });
+
+  return existingApps[0] || localBuild;
 }
 
 const iosCapability = {
@@ -33,7 +40,7 @@ const iosCapability = {
   'appium:bundleId': 'org.reactjs.native.example.AuthApp',
   'appium:newCommandTimeout': 240,
   'appium:autoAcceptAlerts': true,
-  'appium:noReset': true,
+  'appium:noReset': false,
 };
 
 const appPath = getIosAppPath();

@@ -52,9 +52,8 @@ class BasePage {
     await this.waitForDisplayed(element);
     await element.click();
     await element.clearValue();
-    // Type characters sequentially
-    for (const char of text) {
-      await element.addValue(char);
+    for (const character of text) {
+      await element.addValue(character);
     }
 
     await this.dismissKeyboardsAndPopups();
@@ -62,10 +61,15 @@ class BasePage {
 
   /**
    * Cross-platform text reader for React Native Text components
-   * On iOS, getText() can return accessibilityLabel / testID if label is set.
-   * This helper checks text, label, or value attribute cleanly.
+   * Prefer the element's displayed text. Appium can expose an accessibility
+   * identifier through value/label when React Native text has a custom label.
    */
   async getElementText(element) {
+    const text = await element.getText();
+    if (text !== null && text !== undefined && text !== '') {
+      return text;
+    }
+
     if (driver.isIOS) {
       const val = await element.getAttribute('value');
       if (val !== null && val !== undefined && val !== '') {
@@ -76,7 +80,7 @@ class BasePage {
         return label;
       }
     }
-    return await element.getText();
+    return text;
   }
 }
 
